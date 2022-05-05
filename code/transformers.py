@@ -194,7 +194,7 @@ class Encoder(nn.Module):
 
     def __init__(
             self, max_time_scale, time_enc_dim, time_dim, expand_dim, mercer, n_layers, n_head, d_k, d_v,
-            d_model, d_inner, d_data, confidence, dropout=0.1, use_layer_norm=0, use_gap_encoding=0, adapter=0, use_mask=0):
+            d_model, d_inner, d_data, dropout=0.1, use_layer_norm=0, use_gap_encoding=0, adapter=0, use_mask=0):
 
         super().__init__()
         self.mercer = mercer
@@ -211,7 +211,7 @@ class Encoder(nn.Module):
             for _ in range(n_layers)])
         self.use_layer_norm = use_layer_norm
         self.layer_norm = nn.LayerNorm(d_model, eps=1e-6)
-        self.output_proj = nn.Linear(d_model, 2*d_data) if confidence else nn.Linear(d_model, d_data) 
+        self.output_proj = nn.Linear(d_model, d_data)
         self.use_gap_encoding = use_gap_encoding
         if use_gap_encoding:
             self.input_proj = nn.Linear(d_data * 2  + 2 * td, d_model)

@@ -4,8 +4,11 @@
 @Time       : 2021/9/15 9:20
 @Author     : YangJinsheng
 @Descripion :
+@File       : get_dataset.py
 @Software   : PyCharm
 """
+import copy
+
 import pandas as pd
 import numpy as np
 
@@ -13,7 +16,7 @@ class GetUCI():
 
     def __init__(self):
 
-        self.data_path = '../UCI_data/'
+        self.data_path = './UCI_data/'
         self.air_data = pd.read_excel(self.data_path + 'AirQualityUCI.xlsx', engine='openpyxl')[:9357]
         self.lens = 24
         self.steps = 24
@@ -51,7 +54,8 @@ class GetUCI():
             data_valid = dataset[validity_list]
             mask = data_valid.reshape([-1, dataset.shape[-1]])[:, 1]
             impute_num = mask.shape[0] - np.sum(mask)
-            if impute_num <= data.shape[0] * 1e-3:
+            # if impute_num <= data.shape[0] * 1e-3:
+            if impute_num <= 0:
                 lens += 1
                 continue
             else:
@@ -67,14 +71,8 @@ class GetUCI():
         for i in range(dataset.shape[0]):
             mask = dataset[i, :, 1].reshape(-1)
             obs_list = np.where(mask)[0].tolist()
-            min_dist_to_obs = np.zeros(dataset.shape[1])
             if len(obs_list) == 0:
                 continue
-            for j in range(dataset.shape[1]):
-                if j not in obs_list:
-                    min_dist = np.min(np.abs(np.array(obs_list) - j))
-                    min_dist_to_obs[j] = min_dist
-            max_dist_to_obs = np.max(min_dist_to_obs)
             if np.sum(mask) / mask.shape[0] >= 0.9:
                 validity_list.append(i)
         percent_true = len(validity_list) / dataset.shape[0]
@@ -86,11 +84,11 @@ class GetUCI():
         df_columns = self.air_data[columns].values.astype('float64')
         df_columns[df_columns == -200] = np.nan
         mask = self.mask_matrix(df_columns)
-        df_columns = np.nan_to_num(df_columns)
-        data = np.concatenate([df_columns[:, np.newaxis], mask[:, np.newaxis]], axis=-1)
-        delet_data = data[:,0].copy()
-        delet_data = delet_data[~np.isnan(df_columns)]
+        delet_data = copy.deepcopy(df_columns)
+        delet_data = delet_data[~np.isnan(delet_data)]
         mean = np.mean(delet_data)
         std = np.std(delet_data)
+        df_columns = np.nan_to_num(df_columns)
+        data = np.concatenate([df_columns[:, np.newaxis], mask[:, np.newaxis]], axis=-1)
 
         return data, mean, std
